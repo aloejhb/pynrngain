@@ -1,0 +1,26 @@
+fifo_saved = 1
+postfire_step = 0
+frold = 0
+
+proc fifo_advance() {    
+    update_fifolist()
+    
+    if (frold == 0 && $o1.firing) {
+        if (fifo_saved == 0) {
+            print "Warning: A new spike occurs before FIFO memory is saved. max_postfire_step is too long for this interspike interval."
+        }
+        fifo_saved = 0
+        postfire_step = 1
+    } else {
+        if (postfire_step) {
+            postfire_step +=1
+        }
+        
+    }
+    if (postfire_step == max_postfire_step) {
+        save_fifolist()
+        fifo_saved = 1
+        postfire_step = 0
+    }
+    frold = $o1.firing
+}

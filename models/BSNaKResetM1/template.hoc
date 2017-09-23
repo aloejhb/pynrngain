@@ -1,0 +1,99 @@
+begintemplate Cell
+
+public init
+public soma, axon
+public nav
+public kv
+public ap_gen
+
+public check_reset
+
+public get_pos_ais
+public get_ap_thresh
+
+objref this
+objref nil
+
+objref nav
+objref kv
+objref ap_gen
+
+create soma, axon
+
+proc init() {
+    // TODO parameters and units
+    Cm = 0.75 // uF*cm-2
+    Ri = 150 // Ohm*cm
+    Rm = 30000 // Ohm*cm2
+    Epas = -75 // mV
+    
+    pos_ais = $1
+    gnabar = $2
+    gkbar = $3    
+    ap_thresh = $4
+
+    create soma, axon
+    
+    // Morphology
+    soma {
+        L = 50
+        diam = 50
+    }
+    
+    axon {
+        L = 300
+        diam = 1
+    }
+    
+    forall {
+           nseg = int(L)
+    }
+    
+    connect soma(1), axon(0)
+    
+    // Biophysics
+    forall {
+        cm = Cm
+        Ra = Ri
+        insert pas
+        g_pas = 1/Rm
+        e_pas = Epas
+    }
+    
+    axon {
+        nav = new Nav_point(pos_ais)
+        nav.gnabar = gnabar
+        nav.v_resting = Epas
+        nav.trigger = 0
+        ena = 60
+        
+        if (gkbar != 0) {
+            kv = new Kv7_point(pos_ais)
+            kv.gbar = gkbar
+        }
+    }
+    
+}
+
+proc check_reset() {
+    if (axon.v(pos_ais) > ap_thresh) {
+        forall{ v = Epas }
+        nav.rates(Epas)
+        nav.m = nav.minf
+        if (kv != nil){
+            // reset kv.n to mid point of current n and ninf at reset v
+            kv.rates(Epas)
+            kvn_old = kv.n
+            kv.n = (kvn_old + kv.ninf) / 2
+        }
+    }
+}
+
+func get_pos_ais(){
+    return pos_ais
+}
+
+func get_ap_thresh(){
+    return ap_thresh
+}
+endtemplate Cell

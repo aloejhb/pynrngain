@@ -1,0 +1,63 @@
+begintemplate FIFO
+    public init
+
+    public rec
+    public veclist
+    public svtimelist
+
+    public update_vec
+    public get_vec
+    public save_vec
+    
+    objref this
+    strdef name
+    objref rec
+    objref vec
+    objref veclist
+    objref svtimes
+
+    proc init() {
+        name = $s1
+        rec = $o2
+        veclen = $3
+        vec = new Vector(veclen)
+        veclist = new List()
+        svtimes = new Vector()
+    }
+
+    proc update_vec() {
+        vec.remove(0)
+        vec.append(rec.val())
+    }
+
+    obfunc get_vec() {
+        return vec.c()
+    }
+    
+    proc save_vec() { local svtime
+        svtime = $1
+        svtimes.append(svtime)
+        veclist.append(get_vec())
+    }
+
+    proc get_vecleng() {
+        return leng  
+    }
+    
+endtemplate FIFO
+
+
+objref fifolist
+fifolist = new List()
+
+proc update_fifolist() {
+    for i=0,(fifolist.count()-1) {
+              fifolist.o(i).update_vec()
+    }
+}
+
+proc save_fifolist() {
+    for i=0,(fifolist.count()-1) {
+        fifolist.o(i).save_vec(t)
+    }   
+}

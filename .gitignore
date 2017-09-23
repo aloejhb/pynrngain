@@ -1,0 +1,23 @@
+# Compiled python files
+*.pyc
+
+# Compiled mechanisms
+models/*/x86_64/*
+
+# Generated temporary results
+results/*
+mac_results
+
+# Run log files
+run/log/*
+
+# Generated figures
+figures/*
+figures.2506.bk/*
+
+# Generated report files
+reports/*.pdf
+reports/*.tex
+
+# Run log files under model directory
+models/*/log/*

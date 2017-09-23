@@ -5,26 +5,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import plotvarygkbar
 import labeldir
-from subprocess import call
 sys.path.append('../../')
 from nrngain import jspar, transfer, spkstat
-
-
-def submit_to_cluster(jobname, script, args):
-    args = [str(arg) for arg in args]
-    command = ['qsub', '-N', jobname, 'submit.sh', script] + args
-    call(command)
-
-
-def run_ficurve(curtvec, cellpar, outdir, noise=0, tau=0):
-    cpfile = os.path.join(outdir, 'cellpar.json')
-    jspar.save(cpfile, cellpar)
-
-    ctvfile = os.path.join(outdir, 'curtvec.npy')
-    np.save(ctvfile, curtvec)
-
-    args = [ctvfile, cpfile, spkthr, outdir, '--noise', noise, '--tau', tau]
-    submit_to_cluster('ficurve', '../../run/run_ficurve.py', args)
+from runjob import submitjob as sbmj
 
 
 def varygk_ficurve(gkbarli, curtvec, outdir, noise=0, tau=0):
@@ -38,7 +21,7 @@ def varygk_ficurve(gkbarli, curtvec, outdir, noise=0, tau=0):
         ncellpar = {'gkbar': gkbar}
         cellpar = copy.copy(deflt_cellpar)
         cellpar.update(ncellpar)
-        run_ficurve(curtvec, cellpar, subdir, noise, tau)
+        sbmj.run_ficurve(qname, curtvec, cellpar, spkthr, subdir, noise, tau)
 
 
 def plot_ficurve(gkbarli, indir):
@@ -61,24 +44,13 @@ def plot_ficurve(gkbarli, indir):
     plt.show()
 
 
-def run_optstimpar(outdir, cellpar, spkthr, x0, *optmargs):
-    spkthrfile = os.path.join(outdir, 'spkthr.json')
-    jspar.save(spkthrfile, spkthr)
-    cpfile = os.path.join(outdir, 'cellpar.json')
-    jspar.save(cpfile, cellpar)
-
-    args = [outdir, cpfile, spkthr, x0[0], x0[1]]
-    args.extend(optmargs)
-    submit_to_cluster('optstm', '../../run/run_optstimpar.py', args)
-
-
 def varygk_optstimpar(gkbarli, xzeroli, ttime, tau, frttarg, cvtarg, outdir_base):
     print 'Start to optimize stimpar ...'
     print 'gkbar_list: ' + str(gkbarli)
-    print 'x0_list: ' +str(xzeroli)
-    print 'tau: %.0f'% tau
+    print 'x0_list: ' + str(xzeroli)
+    print 'tau: %.0f' % tau
     print 'frt: %.0f\tcv: %.1f' % (frttarg, cvtarg)
-        
+
     optsubdir = labeldir.opt_subdir(tau, frttarg, cvtarg)
     outdir = os.path.join(outdir_base, optsubdir)
     if not os.path.exists(outdir):
@@ -92,24 +64,7 @@ def varygk_optstimpar(gkbarli, xzeroli, ttime, tau, frttarg, cvtarg, outdir_base
         ncellpar = {'gkbar': gkbar}
         cellpar = copy.copy(deflt_cellpar)
         cellpar.update(ncellpar)
-        run_optstimpar(subdir, cellpar, spkthr, x0, tau, ttime, frttarg, cvtarg)
-
-
-def run_simulation(ttime, outdir, pardir):
-    spkthrfile = os.path.join(pardir, 'spkthr.json')
-    cpfile = os.path.join(pardir, 'cellpar.json')
-    spfile = os.path.join(pardir, 'stimpar.json')
-
-    if not (os.path.exists(pardir) and os.path.isfile(cpfile) and os.path.isfile(spfile) and os.path.isfile(spkthrfile)):
-        raise Exception('Please run run_optstimpar() before run_simulation()! pardir {}'.format(pardir))
-
-    if not os.path.exists(outdir):
-        raise OSError('No such directory: {}'.format(outdir))
-
-    spkthr = jspar.load(spkthrfile)
-    stimtyp = 'OU'
-    args = [cpfile, spkthr, ttime, stimtyp, spfile, outdir]
-    submit_to_cluster('sim', '../../run/run_simulation.py', args)
+        sbmj.run_optstimpar(qname, subdir, cellpar, spkthr, x0, tau, ttime, frttarg, cvtarg)
 
 
 def varygk_simulation(gkbarli, ttime, pardir_base, outdir_base):
@@ -119,7 +74,7 @@ def varygk_simulation(gkbarli, ttime, pardir_base, outdir_base):
         outdir = os.path.join(outdir_base, gkdir)
         if not os.path.exists(outdir):
             os.makedirs(outdir)
-        run_simulation(ttime, outdir, pardir)
+        sbmj.run_simulation(qname, ttime, outdir, pardir)
 
 
 def varygk_sta(gkbarli, indir_base):
@@ -128,7 +83,7 @@ def varygk_sta(gkbarli, indir_base):
         indir = os.path.join(indir_base, gkdir)
         if not os.path.exists(indir):
             raise OSError('No such directory: {}'.format(indir))
-        submit_to_cluster('sta', '../../run/run_sta.py', [indir])
+        sbmj.run_sta(qname, indir)
 
 
 def varygk_spkstat(gkbarli, indir_base):
@@ -149,6 +104,7 @@ def varygk_transfer(gkbarli, indir_base):
 
 if __name__ == '__main__':
 
+    qname = 'fulla.q'
     gnabar = 0.005
     deflt_cellpar = {'pos_ais': 0.1,
                      'gnabar': gnabar,

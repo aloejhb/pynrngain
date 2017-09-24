@@ -72,9 +72,6 @@ def fft_sta(sta, dt, maxfreq, sm):
     fvec = np.fft.fftfreq(nsta, d=dt)
 
     # Cut resulting vector to max frequency
-    #### important!! should use neg. freq for calculating transfer
-    # as STA is reverse cross-correlation TODO
-    #### fvec starts from zero??? TODO
     sfreq = 1/dt
     maxf_ind = int(nsta * maxfreq/sfreq)
     ftsta = np.roll(ftsta, -1)[:nsta/2]

@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import labeldir
 import sys
 sys.path.append('../../')
-from nrngain import transfer
+from nrngain import transfer, plotgain
+
 
 def get_figname(norm, cutoff, phase):
     if phase:
@@ -18,31 +19,17 @@ def get_figname(norm, cutoff, phase):
     return '_'.join(nameli)
 
 
-def plot_gain(indir, normalized=False, cutoff=False, **kwargs):
-    transf = np.load(os.path.join(indir, 'transf.npy'))
-    fvec = np.load(os.path.join(indir, 'fvec.npy'))
-    gain = np.absolute(transf)
-    if normalized:
-        gain = gain / gain[1]
-    plt.loglog(fvec, gain, **kwargs)
-    if cutoff and not normalized:
-        plot_cutoff(fvec, gain)
-
-
-def plot_cutoff(fvec, gain):
-    ind, cof, cog = transfer.get_cutoff_freq(fvec, gain, ind=True)
-    plt.plot(cof, cog, 'o', color='k', alpha=0.5)
-    plt.vlines(cof, 0, cog, color='black', linestyle='dashed', alpha=0.7)
-
-
-def plot_gains(gkbarli, indir, figpath, normalized=False, cutoff=False):
+def plot_gains(gkbarli, indir, figpath, normalized=False, cutoff=False,
+               statlab=False):
     plt.figure()
     for gkbar in gkbarli:
         gkdir = labeldir.gkbar_dir(gkbar)
         subdir = os.path.join(indir, gkdir)
         transfdir = os.path.join(subdir, 'transfer')
         lab = labeldir.gkbar_lab(gkbar)
-        plot_gain(transfdir, normalized, cutoff, label=lab)
+        if statlab:
+            lab = lab + plotgain.get_statlab(indir)
+        plotgain.plot_gain(transfdir, normalized, cutoff, label=lab)
 
     plt.xlabel('Frequency (Hz)')
     if normalized:
@@ -53,31 +40,23 @@ def plot_gains(gkbarli, indir, figpath, normalized=False, cutoff=False):
     else:
         plt.ylabel('Gain (Hz/nA)')
         plt.ylim(bottom=100)
+        if cutoff:
+            plotgain.plot_cutoff(transfdir)
     plt.legend(loc=1, prop={'size': 12}, fancybox=True, framealpha=0.5)
     plt.tight_layout()
     plt.savefig(figpath)
 
 
-def plot_transf(indir, **kwargs):
-    transf = np.load(os.path.join(indir, 'transf.npy'))
-    fvec = np.load(os.path.join(indir, 'fvec.npy'))
-    gain = np.absolute(transf)
-    phase = np.angle(transf)
-
-    plt.subplot(121)
-    plt.semilogx(fvec, gain, **kwargs)
-    plt.subplot(122)
-    plt.semilogx(fvec, phase, **kwargs)
-
-
-def plot_transfs(gkbarli, indir, figpath):
+def plot_transfs(gkbarli, indir, figpath, statlab=False):
     plt.figure(figsize=(8, 4))
     for gkbar in gkbarli:
         gkdir = labeldir.gkbar_dir(gkbar)
         subdir = os.path.join(indir, gkdir)
         transfdir = os.path.join(subdir, 'transfer')
         lab = labeldir.gkbar_lab(gkbar)
-        plot_transf(transfdir, label=lab)
+        if statlab:
+            lab = lab + plotgain.get_statlab(indir)
+        plotgain.plot_transf(transfdir, label=lab)
 
     plt.subplot(121)
     plt.xlabel('Frequency (Hz)')

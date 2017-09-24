@@ -5,7 +5,7 @@ import labeldir
 import sys
 import plotgain
 sys.path.append('../../')
-from nrngain import transfer
+from nrngain import transfer, plotgain
 
 simdir = '../../results/BSNaKResetNew/simulation'
 figdir = '../../figures/BSNaKResetNew'

@@ -1,16 +1,12 @@
 import os
-import numpy as np
+import sys
 import matplotlib.pyplot as plt
 import labeldir
+sys.path.append('../../')
+from nrngain import plotficurve
 
 
-def plot_ficurve(indir, marker='o-', **kwargs):
-    curtvec = np.load(os.path.join(indir, 'curtvec.npy'))
-    frtvec = np.load(os.path.join(indir, 'frtvec.npy'))
-    plt.plot(curtvec, frtvec, marker, **kwargs)
-
-
-def plot_varygk_ficurve(gkbarli, indir, marker='o-', labapd='', colorli=None, **kwargs):
+def plot_ficurves(gkbarli, indir, marker='o-', labapd='', colorli=None, **kwargs):
     for i, gkbar in enumerate(gkbarli):
         gkdir = labeldir.gkbar_dir(gkbar)
         lab = labeldir.gkbar_lab(gkbar)
@@ -21,10 +17,10 @@ def plot_varygk_ficurve(gkbarli, indir, marker='o-', labapd='', colorli=None, **
             color = colorli[i]
             kwargs['color'] = color
 
-        plot_ficurve(subdir, marker, label=lab, **kwargs)
+        plotficurve.plot_ficurve(subdir, marker, label=lab, **kwargs)
 
 
-def plot_noise_varygk_ficurve(noise, gkbarli, indir, colorli, nscolorli):
+def plot_noise_ficurves(noise, gkbarli, indir, colorli, nscolorli):
     nsdir = os.path.join(indir, labeldir.noise_dir(noise))
     znsdir = os.path.join(indir, labeldir.noise_dir(0))
 
@@ -47,5 +43,5 @@ if __name__ == '__main__':
     noise = 0.02
     colorli = ['#1f77b4', '#ff7f0e', '#2ca02c']
     nscolorli = ['darkblue', 'chocolate', 'darkgreen']
-    plot_noise_varygk_ficurve(noise, gkbarli, fidir, colorli, nscolorli)
+    plot_noise_ficurves(noise, gkbarli, fidir, colorli, nscolorli)
 

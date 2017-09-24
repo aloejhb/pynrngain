@@ -2,9 +2,9 @@ import os
 import sys
 import copy
 import numpy as np
-import matplotlib.pyplot as plt
-import plotvarygkbar
 import labeldir
+import plotgaingk
+import plotficurvegk
 sys.path.append('../../')
 from nrngain import jspar, transfer, spkstat
 from runjob import submitjob as sbmj
@@ -22,26 +22,6 @@ def varygk_ficurve(gkbarli, curtvec, outdir, noise=0, tau=0):
         cellpar = copy.copy(deflt_cellpar)
         cellpar.update(ncellpar)
         sbmj.run_ficurve(qname, curtvec, cellpar, spkthr, subdir, noise, tau)
-
-
-def plot_ficurve(gkbarli, indir):
-    for gkbar in gkbarli:
-        gkdir = labeldir.gkbar_dir(gkbar)
-        subdir = os.path.join(indir, gkdir)
-        curtvec = np.load(os.path.join(subdir, 'curtvec.npy'))
-        frtvec = np.load(os.path.join(subdir, 'frtvec.npy'))
-        lab = labeldir.gkbar_lab(gkbar)
-        plt.plot(curtvec, frtvec, 'o-', label=lab, ms=2., alpha=0.7)
-        
-    plt.xlabel('I (nA)')
-    # plt.xlim((0, 0.2))
-    plt.ylabel('Firing rate (Hz)')
-    # plt.ylim((0, 80))
-    plt.legend(loc=4, prop={'size': 7}, fancybox=True, framealpha=0.5)
-    plt.minorticks_on()
-    
-    plt.savefig(os.path.join(indir, 'fi_curve.pdf'))
-    plt.show()
 
 
 def varygk_optstimpar(gkbarli, xzeroli, ttime, tau, frttarg, cvtarg, outdir_base):
@@ -119,12 +99,12 @@ if __name__ == '__main__':
     curtvec = np.linspace(0, 0.2, 50)
     noise = 0
     tau = 30
-    noisedir = 'std{:.3f}'.format(noise)
+    noisedir = labeldir.noise_dir(noise)
     noisefidir = os.path.join(fidir, noisedir)
     if not os.path.exists(noisefidir):
-        os.mkdir(noisefidir)
+        os.makedirs(noisefidir)
     # varygk_ficurve(gkbarli, curtvec, noisefidir, noise, tau)
-    # plot_ficurve(gkbarli, noisefidir)
+    plotficurvegk.plot_ficurves(gkbarli, noisefidir)
 
     resdir = '../../results/BSNaKResetNew/'
     optdir = os.path.join(resdir, 'opt_stimpar')
@@ -165,5 +145,5 @@ if __name__ == '__main__':
                 figname = 'gain_'+optpath
             figpath = os.path.join(figdir, 'gain', figname+'.pdf')
             print figpath
-            plotvarygkbar.plot_gains(gkbarli, simdir_base, figpath, normalized=normalized, statlab=True)
+            plotgaingk.plot_gains(gkbarli, simdir_base, figpath, normalized=normalized, statlab=True)
     
